@@ -5,6 +5,10 @@
   "description": "Quickly Generate Disposable Email Address and view received mails.",
   "icon": "send.png",
   "author": "BalliAsghar",
+  "platforms": [
+    "macOS",
+    "Windows"
+  ],
   "categories": [
     "Communication",
     "Web"

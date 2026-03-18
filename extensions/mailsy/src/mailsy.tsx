@@ -1,8 +1,16 @@
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { htmlToMarkdown, isLoggedIn, timeAgo, withToast, removeAccount, handleAction } from "./libs/utils";
+import {
+  htmlToMarkdown,
+  isLoggedIn,
+  timeAgo,
+  withToast,
+  removeAccount,
+  handleAction,
+  getMessageFilePath,
+} from "./libs/utils";
 import { createAccount, deleteAccount, getAccount, getMails, deleteMail, getMessage } from "./libs/api";
-import { Action, ActionPanel, Color, Detail, Icon, List, popToRoot, environment, showHUD } from "@raycast/api";
+import { Action, ActionPanel, Color, Detail, Icon, Keyboard, List, popToRoot, showHUD } from "@raycast/api";
 import { useAccount } from "./hooks/useAccount";
 
 enum View {
@@ -24,6 +32,31 @@ function reducer(state: State, action: Action): State {
       return state;
   }
 }
+
+const copyEmailShortcut: Keyboard.Shortcut = {
+  macOS: { modifiers: ["cmd", "shift"], key: "e" },
+  Windows: { modifiers: ["ctrl", "shift"], key: "e" },
+};
+
+const copyPasswordShortcut: Keyboard.Shortcut = {
+  macOS: { modifiers: ["cmd", "shift"], key: "p" },
+  Windows: { modifiers: ["ctrl", "shift"], key: "p" },
+};
+
+const deleteAccountShortcut: Keyboard.Shortcut = {
+  macOS: { modifiers: ["cmd", "shift"], key: "d" },
+  Windows: { modifiers: ["ctrl", "shift"], key: "d" },
+};
+
+const logoutShortcut: Keyboard.Shortcut = {
+  macOS: { modifiers: ["cmd", "shift"], key: "l" },
+  Windows: { modifiers: ["ctrl", "shift"], key: "l" },
+};
+
+const deleteMessageShortcut: Keyboard.Shortcut = {
+  macOS: { modifiers: ["cmd"], key: "d" },
+  Windows: { modifiers: ["ctrl"], key: "d" },
+};
 
 export default function Command() {
   const [state, dispatch] = useReducer(reducer, { view: View.Loading });
@@ -81,20 +114,20 @@ function Mail(): ReactElement {
                   title="Copy Email"
                   content={Account?.email ?? ""}
                   icon={{ source: Icon.Envelope, tintColor: Color.Purple }}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "e" }}
+                  shortcut={copyEmailShortcut}
                 />
                 <Action.CopyToClipboard
                   title="Copy Password"
                   content={Account?.password ?? ""}
                   icon={{ source: Icon.Key, tintColor: Color.Purple }}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+                  shortcut={copyPasswordShortcut}
                 />
               </ActionPanel.Section>
               <ActionPanel.Section title="Account">
                 <Action
                   title="Delete Account"
                   icon={{ source: Icon.Trash, tintColor: Color.Red }}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
+                  shortcut={deleteAccountShortcut}
                   onAction={() =>
                     handleAction(
                       () => deleteAccount(),
@@ -108,7 +141,7 @@ function Mail(): ReactElement {
                 <Action
                   title="Logout"
                   icon={{ source: Icon.Lock, tintColor: Color.Red }}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "l" }}
+                  shortcut={logoutShortcut}
                   onAction={() =>
                     handleAction(
                       () => removeAccount(),
@@ -136,7 +169,7 @@ function Mail(): ReactElement {
             key={mail.id}
             title={mail.subject !== "" ? mail.subject : "No Subject"}
             icon={{ source: Icon.Message, tintColor: Color.Blue }}
-            quickLook={{ path: `${environment.assetsPath}/${mail.id}.html`, name: mail.subject ?? "" }}
+            quickLook={{ path: getMessageFilePath(mail.id), name: mail.subject ?? "" }}
             accessories={[
               {
                 icon: { source: Icon.Person, tintColor: Color.Green },
@@ -156,10 +189,15 @@ function Mail(): ReactElement {
                   target={<Message messageId={mail.id} />}
                   icon={{ source: Icon.Message, tintColor: Color.Blue }}
                 />
+                <Action.OpenInBrowser
+                  title="Open in Browser"
+                  icon={{ source: Icon.Globe, tintColor: Color.Blue }}
+                  url={getMessageFilePath(mail.id)}
+                />
                 <Action
                   title="Delete Message"
                   icon={{ source: Icon.Trash, tintColor: Color.Red }}
-                  shortcut={{ modifiers: ["cmd"], key: "d" }}
+                  shortcut={deleteMessageShortcut}
                   onAction={() =>
                     handleAction(
                       () => deleteMail(mail.id),
@@ -188,7 +226,7 @@ function Message({ messageId }: { messageId: string }): ReactElement {
     return <></>;
   }
 
-  const path = `${environment.assetsPath}/${messageId}.html`;
+  const path = getMessageFilePath(messageId);
 
   const navigationTitle = Message?.subject || "No Subject";
   const markdownContent = Message?.html ? htmlToMarkdown(Message.html[0]) : "# No Content";

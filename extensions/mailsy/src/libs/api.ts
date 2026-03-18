@@ -2,6 +2,7 @@ import axios from "axios";
 import { Domain, DomainResponse, Account, TokenResponse, Mail, MailResponse, Message } from "../types";
 import {
   deleteMessageCache,
+  ensureMessageFile,
   generateEmail,
   generatePassword,
   getCacheMessage,
@@ -179,6 +180,7 @@ export const getMessage = async (id: string): Promise<Message | null> => {
   if (!account) return null;
 
   const message = getCacheMessage(id) || (await getMailRequest(id, account.token));
+  await ensureMessageFile(message);
 
   return message;
 };

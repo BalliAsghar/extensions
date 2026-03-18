@@ -98,15 +98,28 @@ export const htmlToMarkdown = (html: string): string => {
   return NodeHtmlMarkdown.translate(html, options);
 };
 
+export const getMessageFilePath = (messageId: string): string => {
+  return `${environment.assetsPath}/${messageId}.html`;
+};
+
 // Write Message to File
 export const writeMessageToFile = async (message: Message): Promise<void> => {
   if (!message) return;
 
   const content = message.html ? message.html[0] : "No Content";
+  await fs.writeFile(getMessageFilePath(message.id), content, "utf-8");
+};
 
-  const path = `${environment.assetsPath}/${message.id}.html`;
+export const ensureMessageFile = async (message: Message): Promise<void> => {
+  try {
+    await fs.access(getMessageFilePath(message.id));
+  } catch (error) {
+    if (!(error instanceof Error) || !("code" in error) || error.code !== "ENOENT") {
+      throw error;
+    }
 
-  await fs.writeFile(path, content, "utf-8");
+    await writeMessageToFile(message);
+  }
 };
 
 export const timeAgo = (date: string): string => {
@@ -152,13 +165,17 @@ export const handleAction = (
 // This function either gets the message from the cache or fetches it from the server
 export const getMessageOrUseCache = async (mail: Mail): Promise<Message | null> => {
   const cachedMessage = cache.get(mail.id);
-  if (cachedMessage) return JSON.parse(cachedMessage);
+  if (cachedMessage) {
+    const message: Message = JSON.parse(cachedMessage);
+    await ensureMessageFile(message);
+    return message;
+  }
 
   const message = await getMessage(mail.id);
 
   if (!message) return null;
 
-  writeMessageToFile(message);
+  await ensureMessageFile(message);
   cache.set(mail.id, JSON.stringify(message));
   return message;
 };
@@ -177,6 +194,11 @@ export const getCacheMessage = (id: string): Message | null => {
 export const deleteMessageCache = async (id: string): Promise<void> => {
   cache.remove(id);
 
-  // Delete File
-  await fs.unlink(`${environment.assetsPath}/${id}.html`);
+  try {
+    await fs.unlink(getMessageFilePath(id));
+  } catch (error) {
+    if (!(error instanceof Error) || !("code" in error) || error.code !== "ENOENT") {
+      throw error;
+    }
+  }
 };
