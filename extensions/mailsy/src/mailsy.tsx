@@ -1,34 +1,57 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Action, ActionPanel, Detail, Icon, List, showToast, Toast } from "@raycast/api";
 import { createAccount } from "./libs/api";
-import { isLoggedIn, withToast } from "./libs/utils";
+import { isLoggedIn } from "./libs/utils";
 import { Mail } from "./components/Mail";
 
 export default function Command() {
-  const [isReady, setIsReady] = useState(false);
+  const [bootstrapState, setBootstrapState] = useState<
+    { status: "loading" } | { status: "ready" } | { status: "error"; message: string }
+  >({ status: "loading" });
 
-  useEffect(() => {
-    const bootstrap = async () => {
+  const bootstrap = useCallback(async () => {
+    setBootstrapState({ status: "loading" });
+
+    try {
       const loggedIn = await isLoggedIn();
       if (loggedIn) {
-        setIsReady(true);
+        setBootstrapState({ status: "ready" });
       } else {
-        void withToast({
-          action: () => createAccount(),
-          onSuccess: () => {
-            setIsReady(true);
-            return "Account created successfully";
-          },
-          onFailure: () => "Account creation failed",
-          loadingMessage: "Creating account...",
-        })();
+        await showToast(Toast.Style.Animated, "Creating account...");
+        await createAccount();
+        await showToast(Toast.Style.Success, "Account created successfully");
+        setBootstrapState({ status: "ready" });
       }
-    };
-
-    void bootstrap();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to initialize account";
+      await showToast(Toast.Style.Failure, "Account creation failed", message);
+      setBootstrapState({ status: "error", message });
+    }
   }, []);
 
-  if (!isReady) {
-    return <></>;
+  useEffect(() => {
+    void bootstrap();
+  }, [bootstrap]);
+
+  if (bootstrapState.status === "loading") {
+    return (
+      <List isLoading>
+        <List.EmptyView title="Loading..." />
+      </List>
+    );
+  }
+
+  if (bootstrapState.status === "error") {
+    return (
+      <Detail
+        markdown={`# Failed to initialize mailbox\n\n${bootstrapState.message}`}
+        actions={
+          <ActionPanel>
+            <Action title="Retry" icon={Icon.ArrowClockwise} onAction={() => void bootstrap()} />
+          </ActionPanel>
+        }
+      />
+    );
   }
 
   return <Mail />;

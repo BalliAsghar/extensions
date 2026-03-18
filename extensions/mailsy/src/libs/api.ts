@@ -5,10 +5,12 @@ import { Account, Domain, DomainResponse, Mail, MailResponse, Message, TokenResp
 
 const BASE_URL = "https://api.mail.tm";
 const ACCOUNT_STORAGE_KEY = "account";
+const REQUEST_TIMEOUT_MS = 10000;
 const messageCache = new Cache();
 
 const api = axios.create({
   baseURL: BASE_URL,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: {
     "Content-Type": "application/json",
   },

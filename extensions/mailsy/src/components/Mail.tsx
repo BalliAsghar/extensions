@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
-import { Action, ActionPanel, Color, Icon, Keyboard, List, popToRoot, showHUD } from "@raycast/api";
+import { Action, ActionPanel, Color, Detail, Icon, Keyboard, List, popToRoot, showHUD } from "@raycast/api";
 import { useAccount } from "../hooks/useAccount";
 import { deleteAccount, deleteMail, getAccount, getMails, getMessageFilePath } from "../libs/api";
 import { handleAction, removeAccount, timeAgo } from "../libs/utils";
@@ -32,14 +32,41 @@ const deleteMessageShortcut: Keyboard.Shortcut = {
 };
 
 export function Mail(): ReactElement {
-  const { data: account } = useAccount(getAccount);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [accountRefreshKey, setAccountRefreshKey] = useState(0);
 
+  const fetchAccount = useCallback(() => getAccount(), [accountRefreshKey]);
+  const { data: account, isLoading: isAccountLoading, error: accountError } = useAccount(fetchAccount);
   const fetchMails = useCallback(() => getMails(), [refreshKey]);
-  const { data: mails } = useAccount(fetchMails);
+  const { data: mails, isLoading: isMailsLoading, error: mailsError } = useAccount(fetchMails);
+
+  if (accountError || mailsError) {
+    const errorMessage = accountError?.message ?? mailsError?.message ?? "Something went wrong";
+
+    return (
+      <Detail
+        markdown={`# Failed to load mailbox\n\n${errorMessage}`}
+        actions={
+          <ActionPanel>
+            <Action
+              title="Retry"
+              icon={{ source: Icon.ArrowClockwise, tintColor: Color.Blue }}
+              onAction={() => {
+                if (accountError) {
+                  setAccountRefreshKey((prev) => prev + 1);
+                }
+
+                setRefreshKey((prev) => prev + 1);
+              }}
+            />
+          </ActionPanel>
+        }
+      />
+    );
+  }
 
   return (
-    <List searchBarPlaceholder="Search Mails" isLoading={!account || !mails}>
+    <List searchBarPlaceholder="Search Mails" isLoading={isAccountLoading || isMailsLoading}>
       <List.Section title="Account">
         <List.Item
           title={account?.email ?? ""}
