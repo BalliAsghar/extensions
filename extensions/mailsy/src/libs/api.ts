@@ -83,7 +83,7 @@ export const saveAccount = async (email: string, password: string, token: string
 // Delete Email
 export const deleteEmailRequest = async (id: string): Promise<void> => {
   // Get Account
-  const account: Account = await getAccount();
+  const account = await getAccount();
 
   // if no account, return
   if (!account) return;
@@ -116,7 +116,7 @@ export const createAccount = async (): Promise<void> => {
 };
 
 // Get Account
-export const getAccount = async (): Promise<Account> => {
+export const getAccount = async (): Promise<Account | undefined> => {
   const account = await LocalStorage.getItem<string>("account");
   return account ? JSON.parse(account) : undefined;
 };
@@ -124,7 +124,7 @@ export const getAccount = async (): Promise<Account> => {
 // Delete Account
 export const deleteAccount = async (): Promise<void> => {
   // Get Account
-  const account: Account = await getAccount();
+  const account = await getAccount();
 
   // if no account, return
   if (!account) return;
@@ -142,7 +142,7 @@ export const deleteAccount = async (): Promise<void> => {
 
 // Get Mails
 export const getMails = async (): Promise<Message[]> => {
-  const account: Account = await getAccount();
+  const account = await getAccount();
 
   if (!account) return [];
 
@@ -174,7 +174,7 @@ export const getMailRequest = async (id: string, token: string): Promise<Message
 
 // Get Mail
 export const getMessage = async (id: string): Promise<Message | null> => {
-  const account: Account = await getAccount();
+  const account = await getAccount();
 
   if (!account) return null;
 

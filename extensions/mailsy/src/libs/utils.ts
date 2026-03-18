@@ -72,6 +72,7 @@ export const generatePassword = (): string => {
 export const htmlToMarkdown = (html: string): string => {
   const options: NodeHtmlMarkdownOptions = {
     preferNativeParser: false,
+    indent: "  ",
     codeFence: "```",
     bulletMarker: "*",
     codeBlockStyle: "fenced",

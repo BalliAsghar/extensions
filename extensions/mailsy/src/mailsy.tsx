@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { htmlToMarkdown, isLoggedIn, timeAgo, withToast, removeAccount, handleAction } from "./libs/utils";
 import { createAccount, deleteAccount, getAccount, getMails, deleteMail, getMessage } from "./libs/api";
@@ -56,7 +57,7 @@ export default function Command() {
 }
 
 // Mail.tsx
-function Mail(): JSX.Element {
+function Mail(): ReactElement {
   const { data: Account } = useAccount(getAccount);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -179,7 +180,7 @@ function Mail(): JSX.Element {
 }
 
 // Message.tsx
-function Message({ messageId }: { messageId: string }): JSX.Element {
+function Message({ messageId }: { messageId: string }): ReactElement {
   const fetchMessage = useCallback(() => getMessage(messageId), [messageId]);
   const { data: Message, isloading } = useAccount(fetchMessage);
 
