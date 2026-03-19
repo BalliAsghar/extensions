@@ -1,6 +1,6 @@
 # Mailsy Changelog
 
-## [Changes] - 2026-03-18
+## [Changes] - {PR_MERGE_DATE}
 
 - Upgraded the extension to the latest Raycast API and tooling versions.
 - Added Windows platform support.

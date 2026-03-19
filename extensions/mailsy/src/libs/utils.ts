@@ -8,6 +8,18 @@ const toToastMessage = (input: string | [string, string?]): [string, string?] =>
   return Array.isArray(input) ? input : [input];
 };
 
+const toError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (typeof error === "string" && error.trim().length > 0) {
+    return new Error(error);
+  }
+
+  return new Error("Something went wrong");
+};
+
 export const withToast =
   ({
     action,
@@ -26,9 +38,7 @@ export const withToast =
       await action();
       await showToast(Toast.Style.Success, ...toToastMessage(onSuccess()));
     } catch (error) {
-      if (error instanceof Error) {
-        await showToast(Toast.Style.Failure, ...toToastMessage(onFailure(error)));
-      }
+      await showToast(Toast.Style.Failure, ...toToastMessage(onFailure(toError(error))));
     }
   };
 

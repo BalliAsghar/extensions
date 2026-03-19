@@ -34,7 +34,7 @@ export function Message({ messageId }: MessageProps): ReactElement {
           {message ? (
             <Action.OpenInBrowser
               title="Open in Browser"
-              url={path}
+              url={`file://${path}`}
               icon={{ source: Icon.Globe, tintColor: Color.Blue }}
             />
           ) : null}

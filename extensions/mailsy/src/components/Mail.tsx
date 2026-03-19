@@ -160,7 +160,7 @@ export function Mail(): ReactElement {
                 <Action.OpenInBrowser
                   title="Open in Browser"
                   icon={{ source: Icon.Globe, tintColor: Color.Blue }}
-                  url={getMessageFilePath(mail.id)}
+                  url={`file://${getMessageFilePath(mail.id)}`}
                 />
                 <Action
                   title="Delete Message"
